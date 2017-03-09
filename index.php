@@ -24,6 +24,34 @@ const NOTE_TAGS="@noteTags";
 const NOTE_TITLE="@noteTitle";
 
 
+function parseTags($text)
+{
+    $matches=[];
+    $result = false;
+    $noteTagsExpr = "/".NOTE_TAGS." (.*?)\n/i";
+    if(preg_match($noteTagsExpr, $text, $matches)) {
+        $matches = explode(",", $matches[1]);
+        foreach ($matches as $tag) {
+            $result[] = trim($tag);
+        }
+    }
+
+    return $result;
+}
+
+function parseTitle($text) {
+    $matches=[];
+    $result = false;
+    $noteTagsExpr = "/".NOTE_TITLE." (.*?)\n/i";
+    if(preg_match($noteTagsExpr, $text, $matches)) {
+        $result = $matches[1];
+    }
+
+    return $result;
+}
+
+
+
 $app->post('/push',function(Request $request) use ($app){
     $client = new \Github\Client();
 
@@ -56,9 +84,16 @@ $app->post('/push',function(Request $request) use ($app){
         foreach ($commitObj['files'] as $file) {
             $filePatch = $file['patch'];
             $fileName = $file['filename'];
-        }
-        die(var_dump($commitObj));
 
+            /**
+            @noteTitle Questa e' una prova
+            @noteTags tag1, tag2, tag3
+            */
+            $noteTitle = parseTitle($filePatch);
+            $noteTags = parseTags($filePatch);
+        }
+
+        die(var_dump($noteTitle, $noteTags, $commitObj));
     }
 
 
