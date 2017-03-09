@@ -4,12 +4,25 @@ require_once __DIR__.'/vendor/autoload.php';
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
+use Http\Client\Exception\NetworkException;
+
 
 $app = new Silex\Application();
+$app['debug'] = true;
 
 $app->get('/hello/{name}', function($name) use($app) {
     return 'Hello '.$app->escape($name);
 });
+
+/**
+
+@noteTags tag1,tag2
+@noteTitle titolo della nota
+*/
+
+const NOTE_TAGS="@noteTags";
+const NOTE_TITLE="@noteTitle";
+
 
 $app->post('/push',function(Request $request) use ($app){
     $client = new \Github\Client();
@@ -30,17 +43,21 @@ $app->post('/push',function(Request $request) use ($app){
         $commitSHA = $commit['id'];
         $author = $commit['author'];
 
-        $commitObj = $client->api('repo')
+        try {
+            $commitObj = $client->api('repo')
             ->commits()
             ->show($repoOwner, $repoName, $commitSHA);
+        } catch (NetworkException  $e) {
+            die("Cannot connect");
+        } catch(\Exception $e) {
+            throw $e;
+        }
 
         foreach ($commitObj['files'] as $file) {
             $filePatch = $file['patch'];
             $fileName = $file['filename'];
         }
         die(var_dump($commitObj));
-
-
 
     }
 
