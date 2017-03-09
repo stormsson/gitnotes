@@ -6,6 +6,13 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 use Http\Client\Exception\NetworkException;
 
+use Notes\Parser\NoteParser;
+use Notes\Connector\GithubConnector;
+
+
+function getConnector() {
+    return new GithubConnector();
+}
 
 $app = new Silex\Application();
 $app['debug'] = true;
@@ -20,41 +27,13 @@ $app->get('/hello/{name}', function($name) use($app) {
 @noteTitle titolo della nota
 */
 
-const NOTE_TAGS="@noteTags";
-const NOTE_TITLE="@noteTitle";
-
-
-function parseTags($text)
-{
-    $matches=[];
-    $result = false;
-    $noteTagsExpr = "/".NOTE_TAGS." (.*?)\n/i";
-    if(preg_match($noteTagsExpr, $text, $matches)) {
-        $matches = explode(",", $matches[1]);
-        foreach ($matches as $tag) {
-            $result[] = trim($tag);
-        }
-    }
-
-    return $result;
-}
-
-function parseTitle($text) {
-    $matches=[];
-    $result = false;
-    $noteTagsExpr = "/".NOTE_TITLE." (.*?)\n/i";
-    if(preg_match($noteTagsExpr, $text, $matches)) {
-        $result = $matches[1];
-    }
-
-    return $result;
-}
-
-
-
 $app->post('/push',function(Request $request) use ($app){
-    $client = new \Github\Client();
 
+
+    $client = new \Github\Client();
+    $noteParser = new NoteParser();
+
+    $connector = getConnector();
 
     if (0 === strpos($request->headers->get('Content-Type'), 'application/json')) {
         $data = json_decode($request->getContent(), true);
@@ -72,9 +51,11 @@ $app->post('/push',function(Request $request) use ($app){
         $author = $commit['author'];
 
         try {
-            $commitObj = $client->api('repo')
-            ->commits()
-            ->show($repoOwner, $repoName, $commitSHA);
+            $commitObj = $connector->getCommit([
+                'repoOwner'=>$repoOwner,
+                'repoName' =>$repoName,
+                'commitSHA' =>$commitSHA
+                ]);
         } catch (NetworkException  $e) {
             die("Cannot connect");
         } catch(\Exception $e) {
@@ -89,16 +70,11 @@ $app->post('/push',function(Request $request) use ($app){
             @noteTitle Questa e' una prova
             @noteTags tag1, tag2, tag3
             */
-            $noteTitle = parseTitle($filePatch);
-            $noteTags = parseTags($filePatch);
+            $noteTitle = $noteParser->parseTitle($filePatch);
+            $noteTags = $noteParser->parseTags($filePatch);
         }
-
-        die(var_dump($noteTitle, $noteTags, $commitObj));
+        die(var_dump($noteTitle, $noteTags));
     }
-
-
-
-    $payload = $request->request->all();
 
     return new Response('Thank you for your feedback!', 201);
 });
