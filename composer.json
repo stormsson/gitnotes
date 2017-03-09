@@ -1,0 +1,9 @@
+{
+    "name": "stormsson/gitnotes",
+    "require": {
+        "silex/silex": "^2.0",
+        "google/apiclient": "^2.1",
+        "asimlqt/php-google-spreadsheet-client": "^3.0"
+    },
+    "minimum-stability": "stable"
+}
