@@ -84,7 +84,6 @@ $app->post('/push',function(Request $request) use ($app){
 
         foreach ($commitObj['files'] as $file) {
             $filePatch = $file['patch'];
-            echo "<pre>".$filePatch;die();
             $fileName = $file['filename'];
             $fileUrl = $file['blob_url'];
             $fileRawUrl = $file['raw_url'];
