@@ -99,6 +99,7 @@ $app->post('/push',function(Request $request) use ($app){
             if($noteParser->isParsable($fileName)) {
                 $noteTitle = $noteParser->parseTitle($filePatch);
                 $noteTags = $noteParser->parseTags($filePatch);
+                die(var_dump($filePatch));
                 if($noteTitle) {
                     $data = [
                     $commitTimestamp,
