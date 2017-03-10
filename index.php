@@ -16,8 +16,9 @@ const SPREADSHEET_NAME = "gitNotes";
 
 function getConnector() {
     $githubPersonalAccessToken = file_get_contents(__DIR__."/data/github_personal_access_token");
-    if(false ===  $github_personal_access_token) {
-        throw new \Exception("File ".__DIR__."/data/github_personal_access_token Not found!");
+
+    if(false ===  $githubPersonalAccessToken) {
+        throw new \Exception("github_personal_access_token Not found!");
     }
 
     return new GithubConnector($githubPersonalAccessToken);
@@ -55,11 +56,11 @@ $app->post('/push',function(Request $request) use ($app){
         throw new AccessDeniedHttpException("403"   );
     }
 
+    $repoOwner = $data['repository']['owner']['name'];
     $repoName = $data['repository']['name'];
     $repoFullName = $data['repository']['full_name'];
     $repoUrl = $data['repository']['url'];
     $repoDescription = $data['repository']['description'];
-    $repoOwner = $data['repository']['owner']['name'];
 
 
     $alteredRows = 0;
@@ -67,6 +68,7 @@ $app->post('/push',function(Request $request) use ($app){
         $commitSHA = $commit['id'];
         $author = $commit['author'];
         $commitUrl = $commit['url'];
+        $commitTimestamp = $commit['timestamp'];
 
         try {
             $commitObj = $connector->getCommit([
@@ -83,6 +85,7 @@ $app->post('/push',function(Request $request) use ($app){
 
 
         foreach ($commitObj['files'] as $file) {
+            // die(var_dump($commitObj, $file));
             $filePatch = $file['patch'];
             $fileName = $file['filename'];
             $fileUrl = $file['blob_url'];
@@ -91,23 +94,30 @@ $app->post('/push',function(Request $request) use ($app){
 
             /**
             @noteTitle Questa e' una prova nuova
-            @noteTags tag1, tag2, tag3
+            @noteTags tag1, tag2, tag3, nuovotag
             */
             if($noteParser->isParsable($fileName)) {
                 $noteTitle = $noteParser->parseTitle($filePatch);
                 $noteTags = $noteParser->parseTags($filePatch);
-                $data = [
+                if($noteTitle) {
+                    $data = [
+                    $commitTimestamp,
                     $author['name'],
                     $repoFullName,
                     $noteTitle,
-                    implode(',',$noteTags),
+                    $noteTags? implode(',',$noteTags) : "",
+                    $fileName,
                     $fileUrl,
                     $fileRawUrl,
                     $commitUrl,
+                    $repoOwner,
+                    $repoName
                 ];
 
                 $xlsManager->insertOrUpdate($data);
                 $alteredRows++;
+                }
+
             }
         }
         // die(var_dump($noteTitle, $noteTags));

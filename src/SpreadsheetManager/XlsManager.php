@@ -12,6 +12,10 @@ class XlsManager {
     protected $columnNames=[];
 
     public function __construct($credentialPath) {
+        if(!is_readable($credentialPath)) {
+            throw new \Exception("Google credential file is not readable", 1);
+        }
+
         putenv('GOOGLE_APPLICATION_CREDENTIALS='.$credentialPath);
 
         $this->googleClient = new \Google_Client;
@@ -57,14 +61,15 @@ class XlsManager {
 
         $data = array_combine($this->columnNames, $data);
 
-        $listFeed = $this->currentWorksheet->getListFeed();
+        $listFeed = $this->currentWorksheet->getListFeed([
+            "sq" => "repositoryowner={$data['repositoryowner']} AND repositoryname={$data['repositoryname']} "
+        ]);
         $title = strtolower($data['titolo']);
-        $fileUrl = strtolower($data['fileurl']);
 
         /** @var ListEntry */
         foreach ($listFeed->getEntries() as $entry) {
             $row = $entry->getValues();
-            if((strtolower($row['titolo']) == $title) && (strtolower($row['fileurl']) == $fileUrl)) {
+            if(strtolower($row['titolo']) == $title && (strtolower($row['filename']) == $data['filename'])) {
                 return $entry->update(array_merge($entry->getValues(), $data));
            }
         }
