@@ -5,6 +5,21 @@ class NoteParser {
     const NOTE_TAGS="@noteTags";
     const NOTE_TITLE="@noteTitle";
 
+    protected $parsedExtensions = array(
+        'php',
+        'js',
+        'py',
+        'css',
+        'sass',
+        'scss',
+    );
+
+    public function isParsable($filename): bool
+    {
+        $extensions = implode("|", $this->parsedExtensions);
+        return preg_match("/\.($extensions)/i", $filename);
+    }
+
     public function parseTags($text)
     {
         $matches=[];
@@ -32,4 +47,6 @@ class NoteParser {
 
         return $result;
     }
+
+
 }

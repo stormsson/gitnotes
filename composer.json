@@ -9,6 +9,9 @@
     },
     "minimum-stability": "stable",
     "autoload": {
-        "psr-4": {"Notes\\": "src/"}
+        "psr-4": {
+            "Notes\\": "src/Notes",
+            "SpreadsheetManager\\": "src/SpreadsheetManager"
+        }
     }
 }
