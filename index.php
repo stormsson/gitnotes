@@ -94,12 +94,11 @@ $app->post('/push',function(Request $request) use ($app){
 
             /**
             @noteTitle Questa e' una prova nuova
-            @noteTags tag1, tag2, tag3, nuovotag
+            @noteTags tag1, tag2, tag3, nuovotag, asd
             */
             if($noteParser->isParsable($fileName)) {
                 $noteTitle = $noteParser->parseTitle($filePatch);
                 $noteTags = $noteParser->parseTags($filePatch);
-                die(var_dump($filePatch));
                 if($noteTitle) {
                     $data = [
                     $commitTimestamp,
